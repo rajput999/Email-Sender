@@ -1,8 +1,10 @@
+# app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import smtplib
 from email.message import EmailMessage
 import ssl
+import base64
 paths = ssl.get_default_verify_paths()
 
 app = Flask(__name__)
@@ -14,41 +16,104 @@ def send_email(sender_email, sender_password, email_data):
     msg['To'] = email_data['receiverEmail']
     msg['Subject'] = email_data['emailSubject']
 
+    # Prepare the plain text signature
+    plain_text_signature = f"""
+{email_data['senderName']}
+{email_data['senderDepartment']}
+{email_data['senderInstitution']}
+"""
+
+    # Optionally include social links in plain text
+    if any([email_data['linkedinProfile'], email_data['githubProfile'], email_data['facebookProfile']]):
+        plain_text_signature += "Social Profiles:\n"
+        if email_data['linkedinProfile']:
+            plain_text_signature += f"LinkedIn: {email_data['linkedinProfile']}\n"
+        if email_data['githubProfile']:
+            plain_text_signature += f"GitHub: {email_data['githubProfile']}\n"
+        if email_data['facebookProfile']:
+            plain_text_signature += f"Facebook: {email_data['facebookProfile']}\n"
+
+    # Prepare the plain text body
+    plain_text_body = f"{email_data['emailBody']}\n\n-- \n{plain_text_signature}"
+
+    # Prepare the HTML email body
     formatted_email_body = email_data['emailBody'].replace('\n', '<br>')
 
-    # Create HTML body
+    # Prepare the signature HTML
+    signature_html = f"""
+    <!-- Signature Section -->
+    <table style="width: auto; border: none;">
+        <tr>
+            <td style="vertical-align: top; text-align: right; padding-right: 15px;">
+                <img src="cid:logo_image" alt="{email_data['senderInstitution']} Logo" style="width: 85px;">
+            </td>
+            <td style="vertical-align: top; text-align: left;">
+                <strong>{email_data['senderName']}</strong><br>
+                {email_data['senderDepartment']}<br>
+                {email_data['senderInstitution']}<br>
+    """
+
+    # Add social links if provided
+    if any([email_data['linkedinProfile'], email_data['githubProfile'], email_data['facebookProfile']]):
+        signature_html += '<div>'
+        if email_data['linkedinProfile']:
+            signature_html += f"""
+                <a href="{email_data['linkedinProfile']}">
+                    <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" style="width: 20px; margin-right: 7px;">
+                </a>
+            """
+        if email_data['githubProfile']:
+            signature_html += f"""
+                <a href="{email_data['githubProfile']}">
+                    <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="GitHub" style="width: 20px; margin-right: 7px;">
+                </a>
+            """
+        if email_data['facebookProfile']:
+            signature_html += f"""
+                <a href="{email_data['facebookProfile']}">
+                    <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" style="width: 20px;">
+                </a>
+            """
+        signature_html += '</div>'
+
+    signature_html += """
+            </td>
+        </tr>
+    </table>
+    """
+
     html_body = f"""
     <html>
     <body>
         {formatted_email_body}
         <br><br>
-        <!-- Signature Section -->
-        <table style="width: auto; border: none;">
-            <tr>
-                <td style="vertical-align: top; text-align: right; padding-right: 15px;">
-                    <img src="https://lh5.googleusercontent.com/o5Hh7Uc4lwJQwq0OUUWVrR7Xfk1A8Dyr8u517DvPbzpvCBVXKhkyVIO3Qgl6fNmwm5Nse98bBzBUEE2u64JQanBUDXa9a0b6yxIYgOx4P_9HftA9JpRXRjiQhBlBMWmpvvRe7stW2TYkojY_lKFZ2Ds" alt="{email_data['senderInstitution']} Logo" style="width: 85px;">
-                </td>
-                <td style="vertical-align: top; text-align: left;">
-                    <strong>{email_data['senderName']}</strong><br>
-                    {email_data['senderDepartment']}<br>
-                    {email_data['senderInstitution']}<br>
-                    <a href="{email_data['linkedinProfile']}">
-                        <img src="https://lh4.googleusercontent.com/xilrOfvWrwtXPKoXLRQ95UouNY2W_wHCFLEFQ-5v9pTvxgFkH7tIQ0zZfXrG9IxcurQD9csairG9dE33SxQjzGe4hc8hveF7cm8dMgc6CPnCqB3WGbIWAeV6l1-kXW-ldSL_BHUP_VkU3YeFhHr_w38" alt="LinkedIn" style="width: 20px; margin-right: 7px;">
-                    </a>
-                    <a href="{email_data['githubProfile']}">
-                        <img src="https://lh6.googleusercontent.com/740lrSb8xS8U-vikPArUHMVv0xutEv5hndjyWZ_bg4tKwpAKbI1ixIBAws9xzXaPSPDEMzzapzxAjqTMdffdrgyZ5eACH3eEamZ58HW8kvtTI03_AKky4FuWfWcvYwU29GY5J88MQYSOciVLmlmbdD4" alt="GitHub" style="width: 20px; margin-right: 7px;">
-                    </a>
-                    <a href="{email_data['facebookProfile']}">
-                        <img src="https://lh6.googleusercontent.com/YuHD1alrL9Op8iOwQvq0asAA3khiG88wk8GU2qKPawlodpsYEHgKuDEckHm3ZDUmq8omkB-2xCdMldzmqE_SUQ8wxOO-xcHY4lUd-_5J2EjklaI3vWvL6WWMB9rlasf7SMCo_jkzpoV_SZmww7ckWl0" alt="Facebook" style="width: 20px;">
-                    </a>
-                </td>
-            </tr>
-        </table>
+        -- <br>
+        {signature_html}
     </body>
     </html>
     """
 
-    msg.set_content(html_body, subtype='html')
+    # Set the email content
+    msg.set_content(plain_text_body)
+    msg.add_alternative(html_body, subtype='html')
+
+    # Access the HTML part directly
+    html_part = msg.get_payload()[1]  # The second part is the HTML alternative
+
+    # Handle logo image
+    if 'logoImage' in email_data and email_data['logoImage']:
+        # Extract base64 data
+        base64_data = email_data['logoImage'].split(';base64,')[1]
+        image_data = base64.b64decode(base64_data)
+        # Attach image to email
+        html_part.add_related(image_data, maintype='image', subtype='png', cid='logo_image')
+    else:
+        # Use default image
+        default_logo_url = 'https://via.placeholder.com/85'  # Default image URL
+        # Replace 'cid:logo_image' with default image URL in the HTML content
+        updated_html_body = html_body.replace('cid:logo_image', default_logo_url)
+        # Update the HTML part's content
+        html_part.set_content(updated_html_body, subtype='html')
 
     context = ssl._create_unverified_context()
 
@@ -62,28 +127,29 @@ def send_email(sender_email, sender_password, email_data):
         print(f"Error sending email to {email_data['receiverName']}: {e}")
         return False
 
+
 @app.route('/send-email', methods=['POST'])
 def handle_send_email():
     data = request.get_json()
     sender_email = data['senderEmail']
     sender_password = data['senderPassword']
-    
+
     email_data = {
-        'receiverName': data['receiverName'],
+        'receiverName': data.get('receiverName', ''),
         'receiverEmail': data['receiverEmail'],
-        # 'companyName': data['companyName'],
         'emailSubject': data['emailSubject'],
         'emailBody': data['emailBody'],
         'senderName': data['senderName'],
         'senderDepartment': data['senderDepartment'],
         'senderInstitution': data['senderInstitution'],
-        'linkedinProfile': data['linkedinProfile'],
-        'githubProfile': data['githubProfile'],
-        'facebookProfile': data['facebookProfile'],
+        'linkedinProfile': data.get('linkedinProfile', ''),
+        'githubProfile': data.get('githubProfile', ''),
+        'facebookProfile': data.get('facebookProfile', ''),
+        'logoImage': data.get('logoImage', ''),
     }
 
     success = send_email(sender_email, sender_password, email_data)
-    
+
     if success:
         return jsonify({'message': 'Email sent successfully!'})
     else:

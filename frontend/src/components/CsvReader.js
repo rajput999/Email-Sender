@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+// CSVReaderWithForm.js
+import React, { useState, useRef } from 'react';
 import Papa from 'papaparse';
 import { useNavigate } from 'react-router-dom';
-import EmailPreviewer from './EmailPreviewer'; // Import the EmailPreviewer
+import EmailPreviewer from './EmailPreviewer';
 
 const CSVReaderWithForm = () => {
   const [formData, setFormData] = useState({
@@ -15,26 +16,13 @@ const CSVReaderWithForm = () => {
     facebookProfile: '',
     imageUrl: '',
     csvFile: null, // To store the CSV file
+    logoImage: null, // To store the logo image
   });
 
   const [columns, setColumns] = useState([]);
   const [firstRow, setFirstRow] = useState([]);
   const emailBodyRef = useRef(null);
   const navigate = useNavigate();
-
-  // Fetch image URL on component load (similar to DesignEmailForm)
-  // useEffect(() => {
-  //   const imageFetchUrl = '/backend-api/image-url';
-  //   fetch(imageFetchUrl)
-  //     .then((response) => response.json())
-  //     .then((data) => {
-  //       setFormData((prevState) => ({
-  //         ...prevState,
-  //         imageUrl: data.url,
-  //       }));
-  //     })
-  //     .catch((error) => console.error('Error fetching image URL:', error));
-  // }, []);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -107,6 +95,21 @@ const CSVReaderWithForm = () => {
       ...prevState,
       [name]: value,
     }));
+  };
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Read the file as Data URL (base64)
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prevState) => ({
+          ...prevState,
+          logoImage: reader.result, // base64 encoded string
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -244,6 +247,16 @@ const CSVReaderWithForm = () => {
               required
               value={formData.senderInstitution}
               onChange={handleChange}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="logoImage">Upload Logo (Optional)</label>
+            <input
+              id="logoImage"
+              name="logoImage"
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
             />
           </div>
         </div>

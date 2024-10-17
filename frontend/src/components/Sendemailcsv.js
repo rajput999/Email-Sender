@@ -1,3 +1,4 @@
+// Sendemailcsv.js
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import EmailPreviewer from './EmailPreviewer';
@@ -56,7 +57,6 @@ const Sendemailcsv = () => {
               return tempContainer.innerHTML;
             };
 
-
             // Replace placeholders in the email body
             const formattedEmailBody = replacePlaceholders(emailDesign.emailBody, row);
 
@@ -93,7 +93,6 @@ const Sendemailcsv = () => {
       skipEmptyLines: true,
     });
   };
-
 
   return (
     <div className="email-form-container">

@@ -1,3 +1,4 @@
+// EmailPreviewer.js
 import React from 'react';
 
 const EmailPreviewer = ({ formData, emailBody }) => {
@@ -6,10 +7,13 @@ const EmailPreviewer = ({ formData, emailBody }) => {
       <h3>Email Preview</h3>
       <div className="email-content">
         <p style={{ whiteSpace: 'pre-line' }}>
-          {/* Render the email body with HTML content (e.g., span elements for placeholders) */}
+          {/* Render the email body with HTML content */}
           <div
             dangerouslySetInnerHTML={{
-              __html: emailBody || formData.emailBody || `Dear ${formData.receiverName || 'Receiver'},\nThis is the body of the email.`,
+              __html:
+                emailBody ||
+                formData.emailBody ||
+                `Dear ${formData.receiverName || 'Receiver'},\nThis is the body of the email.`,
             }}
           />
         </p>
@@ -20,10 +24,12 @@ const EmailPreviewer = ({ formData, emailBody }) => {
               <td className="signature-logo">
                 <img
                   src={
+                    formData.logoImage ||
                     formData.imageUrl ||
-                    'https://lh5.googleusercontent.com/o5Hh7Uc4lwJQwq0OUUWVrR7Xfk1A8Dyr8u517DvPbzpvCBVXKhkyVIO3Qgl6fNmwm5Nse98bBzBUEE2u64JQanBUDXa9a0b6yxIYgOx4P_9HftA9JpRXRjiQhBlBMWmpvvRe7stW2TYkojY_lKFZ2Ds'
+                    'https://via.placeholder.com/85' // Default image URL
                   }
                   alt={`${formData.senderInstitution || 'Your'} Logo`}
+                  style={{ width: '85px' }}
                 />
               </td>
               <td className="signature-details">
@@ -40,6 +46,7 @@ const EmailPreviewer = ({ formData, emailBody }) => {
                         src="https://cdn-icons-png.flaticon.com/512/174/174857.png"
                         alt="LinkedIn"
                         className="social-icon"
+                        style={{ width: '20px', marginRight: '7px' }}
                       />
                     </a>
                   )}
@@ -49,6 +56,7 @@ const EmailPreviewer = ({ formData, emailBody }) => {
                         src="https://cdn-icons-png.flaticon.com/512/25/25231.png"
                         alt="GitHub"
                         className="social-icon"
+                        style={{ width: '20px', marginRight: '7px' }}
                       />
                     </a>
                   )}
@@ -58,6 +66,7 @@ const EmailPreviewer = ({ formData, emailBody }) => {
                         src="https://cdn-icons-png.flaticon.com/512/733/733547.png"
                         alt="Facebook"
                         className="social-icon"
+                        style={{ width: '20px' }}
                       />
                     </a>
                   )}
